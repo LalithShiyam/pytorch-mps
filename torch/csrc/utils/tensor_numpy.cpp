@@ -401,7 +401,12 @@ at::Tensor tensor_from_cuda_array_interface(PyObject* obj) {
       throw ValueError("cannot parse `typestr`");
     }
     dtype = numpy_dtype_to_aten(descr->type_num);
-    dtype_size_in_bytes = descr->elsize;
+    // Use conditional compilation to handle different NumPy API versions
+    #if NPY_API_VERSION > 0x00000011  // Use the appropriate version check for NumPy 1.26.4
+        dtype_size_in_bytes = PyDataType_ELSIZE(descr);  // Use this function for NumPy 1.26.4 and newer
+    #else
+        dtype_size_in_bytes = descr->elsize;  // Fallback for older versions
+    #endif
     TORCH_INTERNAL_ASSERT(dtype_size_in_bytes > 0);
   }
 
